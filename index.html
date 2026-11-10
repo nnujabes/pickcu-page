@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>영양 편의점 · Pick CU</title>
+<meta name="description" content="문장 한 줄로 조건을 말하면 CU 편의점 상품 조합 Top 5를 영양 합계와 함께 추천하는 서비스. 팀 아이넷 LLM 프로젝트.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #faf9f8;
+    --surface: #ffffff;
+    --soft: #f6f0ea;
+    --line: #e6dfd5;
+    --ink: #3b2f25;
+    --ink-2: #6b5c4f;
+    --accent: #a2684b;
+    --gold: #c98f3c;
+    --dark: #564333;
+    --blue: #1f6aa5;
+    --radius: 14px;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: 'Noto Sans KR', system-ui, -apple-system, 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
+    font-size: 17px;
+    line-height: 1.7;
+    word-break: keep-all;
+  }
+  img { max-width: 100%; height: auto; display: block; }
+  .shot img { width: 100%; }
+  .grid > *, .step > *, .themes > *, .flow > * { min-width: 0; }
+  a { color: var(--accent); }
+  .wrap { max-width: 1080px; margin: 0 auto; padding: 0 20px; }
+
+  /* nav */
+  nav {
+    position: sticky; top: 0; z-index: 10;
+    background: rgba(250, 249, 248, 0.92);
+    backdrop-filter: blur(8px);
+    border-bottom: 1px solid var(--line);
+  }
+  nav .wrap { display: flex; align-items: center; gap: 20px; height: 56px; overflow-x: auto; white-space: nowrap; }
+  nav .brand { font-weight: 900; color: var(--ink); text-decoration: none; margin-right: auto; }
+  nav a.link { color: var(--ink-2); text-decoration: none; font-size: 15px; }
+  nav a.link:hover { color: var(--accent); }
+
+  /* hero */
+  .hero { padding: 64px 0 40px; }
+  .eyebrow { color: var(--accent); font-weight: 700; font-size: 15px; letter-spacing: 0.02em; margin: 0 0 8px; }
+  h1 { font-size: clamp(36px, 7vw, 60px); line-height: 1.15; margin: 0 0 16px; font-weight: 900; }
+  .lead { font-size: clamp(18px, 2.6vw, 22px); color: var(--ink-2); margin: 0 0 28px; max-width: 760px; }
+  .demo-line {
+    display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px;
+    background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius);
+    padding: 18px 20px; margin-bottom: 28px;
+  }
+  .demo-line .q { font-weight: 700; }
+  .demo-line .arrow { color: var(--accent); font-weight: 900; }
+  .pill { display: inline-block; background: var(--soft); border-radius: 999px; padding: 4px 14px; font-size: 15px; font-weight: 500; }
+  .pill.dark { background: var(--dark); color: #fff; }
+  .buttons { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 36px; }
+  .btn {
+    display: inline-block; text-decoration: none; font-weight: 700; font-size: 15px;
+    padding: 10px 18px; border-radius: 10px; border: 1px solid var(--line); background: var(--surface); color: var(--ink);
+  }
+  .btn.primary { background: var(--dark); border-color: var(--dark); color: #fff; }
+  .shot { border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; background: var(--surface); box-shadow: 0 10px 30px rgba(59, 47, 37, 0.08); }
+
+  /* sections */
+  section { padding: 56px 0; border-top: 1px solid var(--line); }
+  h2 { font-size: clamp(26px, 4vw, 34px); line-height: 1.3; margin: 0 0 8px; font-weight: 900; }
+  .sub { color: var(--ink-2); margin: 0 0 28px; }
+  h3 { font-size: 20px; margin: 0 0 6px; }
+  .grid { display: grid; gap: 16px; }
+  .g2 { grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); }
+  .g3 { grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); }
+  .g4 { grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); }
+  .card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 22px; }
+  .card.soft { background: var(--soft); border-color: transparent; }
+  .card p { margin: 0; color: var(--ink-2); }
+  .quote { font-size: 19px; font-weight: 700; color: var(--ink); margin: 6px 0 0; }
+  .tag { font-size: 14px; font-weight: 700; color: var(--accent); }
+
+  /* table */
+  .table-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); }
+  table { width: 100%; border-collapse: collapse; min-width: 640px; font-size: 16px; }
+  th, td { text-align: left; padding: 12px 16px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  th { background: var(--soft); font-weight: 700; }
+  tr:last-child td { border-bottom: none; }
+  td.ours { color: var(--accent); font-weight: 700; }
+  td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+
+  /* demo gallery */
+  .steps { display: grid; gap: 28px; }
+  .step { display: grid; grid-template-columns: 1fr; gap: 12px; }
+  .step-head { display: flex; gap: 12px; align-items: baseline; }
+  .num { flex: none; width: 32px; height: 32px; border-radius: 50%; background: var(--dark); color: #fff; font-weight: 700; display: inline-flex; align-items: center; justify-content: center; font-size: 15px; }
+  @media (min-width: 860px) {
+    .step { grid-template-columns: 280px 1fr; align-items: start; }
+  }
+  .themes { display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); align-items: end; }
+  .theme { display: grid; grid-template-columns: 3fr 1fr; gap: 12px; align-items: end; }
+  .theme > * { min-width: 0; }
+  .caption { color: var(--ink-2); font-size: 15px; margin-top: 8px; }
+  .scenarios { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+
+  /* flow diagram */
+  .flow { display: flex; flex-wrap: wrap; align-items: stretch; gap: 8px; }
+  .node { flex: 1 1 150px; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; }
+  .node .k { font-size: 13px; font-weight: 700; color: var(--accent); letter-spacing: 0.04em; }
+  .node b { display: block; font-size: 17px; margin: 2px 0 4px; }
+  .node span { color: var(--ink-2); font-size: 14px; line-height: 1.5; display: block; }
+  .node.ai { background: var(--blue); border-color: var(--blue); }
+  .node.ai .k, .node.ai b, .node.ai span { color: #fff; }
+  .node.code { background: var(--dark); border-color: var(--dark); }
+  .node.code .k, .node.code b, .node.code span { color: #fff; }
+  .link-arrow { flex: none; align-self: center; color: var(--accent); font-weight: 900; font-size: 20px; }
+  @media (max-width: 640px) {
+    .flow { flex-direction: column; }
+    .link-arrow { transform: rotate(90deg); }
+  }
+  .lane-title { font-weight: 700; margin: 0 0 10px; }
+  .principle { margin-top: 24px; border-left: 6px solid var(--accent); background: var(--soft); padding: 16px 20px; border-radius: 8px; font-weight: 700; }
+  .calc { font-variant-numeric: tabular-nums; }
+  .calc .row { display: flex; justify-content: space-between; gap: 12px; padding: 8px 0; border-bottom: 1px dashed var(--line); }
+  .calc .row:last-child { border-bottom: none; font-weight: 900; color: var(--accent); }
+  .funnel { display: grid; gap: 8px; }
+  .funnel .bar { background: var(--soft); border-radius: 8px; padding: 10px 14px; display: flex; justify-content: space-between; gap: 12px; font-variant-numeric: tabular-nums; }
+  .funnel .bar strong { font-size: 18px; white-space: nowrap; }
+
+  /* charts */
+  .big { font-size: clamp(40px, 6vw, 56px); font-weight: 900; line-height: 1.1; color: var(--ink); }
+  .big small { font-size: 18px; font-weight: 700; color: var(--ink-2); }
+  .chart { display: grid; gap: 10px; }
+  .chart .row { display: grid; grid-template-columns: 120px 1fr 64px; align-items: center; gap: 12px; font-size: 15px; }
+  .chart .track { position: relative; height: 26px; background: var(--soft); border-radius: 6px; overflow: hidden; }
+  .chart .fill { height: 100%; background: var(--gold); border-radius: 0 4px 4px 0; }
+  .chart .fill.best { background: var(--accent); }
+  .chart .fill.test { background: var(--dark); }
+  .chart .val { text-align: right; font-weight: 700; font-variant-numeric: tabular-nums; }
+  .chart .goal { position: absolute; top: -4px; bottom: -4px; width: 2px; background: var(--ink); }
+  .legend { display: flex; flex-wrap: wrap; gap: 14px; font-size: 14px; color: var(--ink-2); margin-top: 10px; }
+  .legend i { display: inline-block; width: 12px; height: 12px; border-radius: 3px; margin-right: 6px; vertical-align: -1px; }
+  @media (max-width: 520px) {
+    .chart .row { grid-template-columns: 92px 1fr 54px; font-size: 14px; }
+  }
+  .compare { display: grid; gap: 6px; }
+  .compare .item { display: grid; grid-template-columns: 1fr auto; gap: 8px; align-items: baseline; }
+  .compare .item .label { color: var(--ink-2); font-size: 15px; }
+  .compare .item .v { font-weight: 900; font-size: 22px; font-variant-numeric: tabular-nums; }
+  .compare .item .v .arrow { color: var(--accent); margin: 0 4px; }
+
+  ul.clean { margin: 0; padding-left: 20px; color: var(--ink-2); }
+  ul.clean li { margin: 4px 0; }
+
+  footer { padding: 40px 0 60px; border-top: 1px solid var(--line); color: var(--ink-2); font-size: 14px; }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="wrap">
+    <a class="brand" href="#top">영양 편의점</a>
+    <a class="link" href="#problem">문제</a>
+    <a class="link" href="#demo">데모</a>
+    <a class="link" href="#how">작동 원리</a>
+    <a class="link" href="#results">결과</a>
+    <a class="link" href="#next">한계</a>
+    <a class="link" href="#team">팀</a>
+  </div>
+</nav>
+
+<header class="hero" id="top">
+  <div class="wrap">
+    <p class="eyebrow">팀 아이넷 · K-Digital Training LLM 프로젝트 · Pick CU</p>
+    <h1>영양 편의점</h1>
+    <p class="lead">평소 말투로 조건을 한 줄 적으면, CU 편의점 상품 조합 <b>Top 5</b>를 가격과 영양 합계와 함께 추천합니다. LLM은 문장을 해석만 하고, 숫자는 실제 상품 DB로 코드가 계산합니다.</p>
+
+    <div class="demo-line">
+      <span class="q">“운동 끝나고 5천원으로 먹을 거 추천해줘”</span>
+      <span class="pill">간편식사</span><span class="pill">음료</span>
+      <span class="arrow">→</span>
+      <span class="pill dark">단백질 ↑</span><span class="pill dark">지방 ↓</span><span class="pill dark">예산 5,000원</span>
+      <span class="arrow">→</span>
+      <span class="q">조합 Top 5</span>
+    </div>
+
+    <div class="buttons">
+      <a class="btn primary" href="#demo">화면 보기</a>
+      <a class="btn" href="#results">결과 숫자</a>
+      <a class="btn" href="https://github.com/nnujabes/Pick_CU">GitHub 저장소</a>
+    </div>
+
+    <div class="shot"><img src="images/02-top5.png" alt="카테고리 간편식사와 음료를 고르고 '운동 후 먹을 1만 원 미만의 음식을 추천해줘'를 입력하자 AI 추천 조합 Top 5가 나온 화면" width="1672" height="941"></div>
+  </div>
+</header>
+
+<section id="problem">
+  <div class="wrap">
+    <h2>문제</h2>
+    <p class="sub">편의점에서 목적과 예산에 맞는 먹거리를 고르려면 영양성분표를 하나하나 보고, 여러 상품의 합계를 직접 계산해야 합니다.</p>
+
+    <div class="grid g3">
+      <div class="card"><span class="tag">운동 후 · 예산</span><p class="quote">“운동 후 먹을 1만 원 미만의 음식을 추천해줘”</p></div>
+      <div class="card"><span class="tag">초저예산 식단</span><p class="quote">“5000원으로 든든한 한 끼 추천해줘”</p></div>
+      <div class="card"><span class="tag">야식 · 성분 관리</span><p class="quote">“내일 얼굴 안 붓게 짠 거 말고 야식 추천해줘”</p></div>
+    </div>
+
+    <h3 style="margin-top:36px">기존 서비스로는 안 되는 것</h3>
+    <p class="sub" style="margin-bottom:16px">목적, 예산, 정확한 영양 합계를 한 번에 주는 서비스가 없었습니다.</p>
+    <div class="table-wrap">
+      <table>
+        <tr><th>서비스</th><th>할 수 있는 것</th><th>한계</th><th>영양 편의점</th></tr>
+        <tr><td>편의점 자체 앱</td><td>자사 상품·행사·재고 조회</td><td>목적별 조합 추천과 영양 합산이 없음</td><td class="ours">목적·예산에 맞는 조합과 영양 합계</td></tr>
+        <tr><td>범용 LLM 챗봇</td><td>자연어로 조합 추천</td><td>실제 제품·가격·영양을 추정(환각)</td><td class="ours">LLM은 해석만, 수치는 DB·코드가 계산</td></tr>
+        <tr><td>편의점 행사 정보 앱</td><td>여러 편의점 행사 비교</td><td>행사 중심, 영양 기반 추천 없음</td><td class="ours">영양 목표 기반 추천</td></tr>
+        <tr><td>식단 기록 앱</td><td>직접 검색 후 기록</td><td>구매 전 선택은 지원하지 않음</td><td class="ours">메뉴 고르기 전에 바로 추천</td></tr>
+      </table>
+    </div>
+  </div>
+</section>
+
+<section id="demo">
+  <div class="wrap">
+    <h2>해결 방법과 데모</h2>
+    <p class="sub">사용자는 카테고리를 1~3개 고르고 문장을 씁니다. 결과로 상품 조합 5개를 받고, 영양정보 확인, 장바구니, 별점까지 한 화면에서 이어집니다.</p>
+
+    <div class="steps">
+      <div class="step">
+        <div><div class="step-head"><span class="num">1</span><h3>조건 입력</h3></div><p class="caption">카테고리를 고르고 평소 말투로 문장을 입력합니다.</p></div>
+        <div class="shot"><img src="images/01-input.png" alt="카테고리 선택과 추천 조건 입력 칸이 있는 첫 화면" width="1600" height="1000" loading="lazy"></div>
+      </div>
+      <div class="step">
+        <div><div class="step-head"><span class="num">2</span><h3>Top 5 결과</h3></div><p class="caption">조합마다 가격, 단백질·열량·지방 합계가 붙어 나옵니다.</p></div>
+        <div class="shot"><img src="images/02-top5.png" alt="Top 5 조합 카드가 가격과 영양 합계와 함께 표시된 화면" width="1672" height="941" loading="lazy"></div>
+      </div>
+      <div class="step">
+        <div><div class="step-head"><span class="num">3</span><h3>영양정보 확인</h3></div><p class="caption">상품 사진에 마우스를 올리거나 누르면 6대 영양정보가 나옵니다.</p></div>
+        <div class="shot"><img src="images/03-nutrition.png" alt="상품 사진 위에 단백질, 열량, 나트륨, 탄수화물, 당류, 지방이 표시된 말풍선" width="1672" height="941" loading="lazy"></div>
+      </div>
+      <div class="step">
+        <div><div class="step-head"><span class="num">4</span><h3>장바구니 담기</h3></div><p class="caption">마음에 드는 조합을 담고 합계 금액을 확인합니다.</p></div>
+        <div class="shot"><img src="images/04-cart.png" alt="조합을 담은 장바구니 패널과 합계 9,800원" width="1672" height="941" loading="lazy"></div>
+      </div>
+      <div class="step">
+        <div><div class="step-head"><span class="num">5</span><h3>별점 남기기</h3></div><p class="caption">추천받은 조합에 별점과 한 줄 평을 남기면 랭킹에 오르고, 다음 추천 순위에 반영됩니다.</p></div>
+        <div class="shot"><img src="images/05-ratings.png" alt="조합에 별점 5점과 한 줄 평을 남기고 랭킹을 보는 화면" width="1248" height="568" loading="lazy"></div>
+      </div>
+    </div>
+
+    <h3 style="margin-top:44px">다크·화이트, 웹·모바일</h3>
+    <div class="themes" style="margin-top:12px">
+      <div>
+        <div class="theme">
+          <div class="web shot"><img src="images/dark-web.png" alt="다크 모드 웹 첫 화면" width="1600" height="1000" loading="lazy"></div>
+          <div class="mobile shot"><img src="images/dark-mobile.png" alt="다크 모드 모바일 첫 화면" width="786" height="1704" loading="lazy"></div>
+        </div>
+        <p class="caption">다크 모드 · 기본 테마, 민트색 강조</p>
+      </div>
+      <div>
+        <div class="theme">
+          <div class="web shot"><img src="images/01-input.png" alt="화이트 모드 웹 첫 화면" width="1600" height="1000" loading="lazy"></div>
+          <div class="mobile shot"><img src="images/white-mobile.png" alt="화이트 모드 모바일 첫 화면" width="786" height="1704" loading="lazy"></div>
+        </div>
+        <p class="caption">화이트 모드 · 노란색 강조, 버튼 하나로 전환</p>
+      </div>
+    </div>
+
+    <h3 style="margin-top:36px">시연 시나리오</h3>
+    <div class="scenarios">
+      <span class="pill">운동 후 먹을 1만원 미만의 음식을 추천해줘</span>
+      <span class="pill">오늘 날씨 어때? (관계없는 문장은 추천하지 않음)</span>
+      <span class="pill">500원으로 든든한 한 끼 추천해줘 (예산이 너무 적으면 안내)</span>
+      <span class="pill">내일 얼굴 안 붓게 짠 거 말고 야식 추천해줘</span>
+    </div>
+  </div>
+</section>
+
+<section id="how">
+  <div class="wrap">
+    <h2>작동 원리</h2>
+    <p class="sub">데이터를 먼저 만들고, 추천할 때는 LLM이 문장을 조건으로 바꾼 뒤 코드가 실제 DB로 조합을 계산합니다.</p>
+
+    <p class="lane-title">① 데이터 구축</p>
+    <div class="flow">
+      <div class="node"><span class="k">IN</span><b>CU 상품 이미지</b><span>앱 상세 페이지 크롤링</span></div>
+      <span class="link-arrow">→</span>
+      <div class="node ai"><span class="k">VISION LLM</span><b>Qwen2.5-VL-7B</b><span>영양성분표 → JSON</span></div>
+      <span class="link-arrow">→</span>
+      <div class="node code"><span class="k">DB</span><b>SQLite 상품 DB</b><span>2,154개 · 영양소 6개 · 가격 · 행사</span></div>
+    </div>
+
+    <p class="lane-title" style="margin-top:28px">② 추천 서비스</p>
+    <div class="flow">
+      <div class="node"><span class="k">IN</span><b>문장 + 카테고리</b><span>1~3개 선택</span></div>
+      <span class="link-arrow">→</span>
+      <div class="node ai"><span class="k">LLM</span><b>A.X-4.0-Light</b><span>QLoRA 파인튜닝 · 영양소 2개와 방향</span></div>
+      <span class="link-arrow">→</span>
+      <div class="node code"><span class="k">CODE · SQL</span><b>후보 검색</b><span>카테고리별 · 예산은 규칙으로 가격 상한</span></div>
+      <span class="link-arrow">→</span>
+      <div class="node code"><span class="k">CODE</span><b>Top 5 필터</b><span>영양 0.7 + 가격 0.3 · 별점 반영</span></div>
+      <span class="link-arrow">→</span>
+      <div class="node"><span class="k">OUT</span><b>추천 카드 5개</b><span>합계 가격 · 영양 합계</span></div>
+    </div>
+
+    <p class="principle">LLM은 문장을 해석만 합니다. 가격과 영양 합계는 모델이 지어내지 못하도록 Python과 SQL이 DB 값으로 계산합니다.</p>
+
+    <h3 style="margin-top:40px">예시: “운동 끝나고 5천원으로…” + 간편식사·음료</h3>
+    <div class="grid g2" style="margin-top:12px">
+      <div class="card">
+        <p class="tag" style="margin-bottom:10px">조합이 줄어드는 과정</p>
+        <div class="funnel">
+          <div class="bar"><span>전체 조합 (간편식사 158 × 음료 404)</span><strong>63,832</strong></div>
+          <div class="bar"><span>예산 안 조합 (합계 ≤ 5,000원)</span><strong>19,622</strong></div>
+          <div class="bar"><span>중복 상품을 건너뛰며 고른 결과</span><strong>Top 5</strong></div>
+        </div>
+      </div>
+      <div class="card calc">
+        <p class="tag" style="margin-bottom:6px">1위 점수 계산 · 저당치킨샌드 + 캔커피, 4,900원</p>
+        <div class="row"><span>영양 점수 (90.2 + 60.9) ÷ 2</span><b>75.5</b></div>
+        <div class="row"><span>가격 점수 4,900 ÷ 5,000 × 100</span><b>98.0</b></div>
+        <div class="row"><span>총점 0.7 × 75.5 + 0.3 × 98.0</span><b>82.3</b></div>
+      </div>
+    </div>
+
+    <h3 style="margin-top:40px">사용 기술</h3>
+    <div class="grid g4" style="margin-top:12px">
+      <div class="card soft"><b>문장 해석</b><p>A.X-4.0-Light (SKT, 7B) · QLoRA 4bit · 시연은 Q5_K_M 양자화 + Ollama</p></div>
+      <div class="card soft"><b>데이터</b><p>Playwright·Selenium 크롤링 · Qwen2.5-VL-7B · SQLite</p></div>
+      <div class="card soft"><b>백엔드</b><p>Python · FastAPI (API 5개) · 리뷰는 별도 DB에 저장</p></div>
+      <div class="card soft"><b>프론트엔드</b><p>React 18 · TypeScript · Vite · Tailwind CSS</p></div>
+    </div>
+  </div>
+</section>
+
+<section id="results">
+  <div class="wrap">
+    <h2>결과</h2>
+    <p class="sub">문장에서 영양소 2개와 방향을 모두 맞힌 비율(완전 정답률)로 평가했습니다. 개발용 dev 216문장으로 고치고, 마지막에 처음 보는 test 240문장으로 한 번 쟀습니다.</p>
+
+    <div class="grid g3">
+      <div class="card"><div class="big">85.8<small>%</small></div><p>test 240문장 완전 정답률<br>목표 80% 달성 · 원본 모델은 62.5%</p></div>
+      <div class="card"><div class="big">0.81<small>초</small></div><p>문장당 응답 시간 (RTX 4060)<br>양자화 전 3.3초에서 약 4배 빨라짐</p></div>
+      <div class="card"><div class="big">2,154<small>개</small></div><p>영양 DB 상품 수<br>이 중 2,130개(98.9%)가 추천 대상</p></div>
+    </div>
+
+    <h3 style="margin-top:40px">프롬프트로는 44%에서 멈췄고, 파인튜닝으로 넘었습니다</h3>
+    <div class="card" style="margin-top:12px">
+      <div class="chart" role="img" aria-label="완전 정답률: 성분 2개 첫 시도 14.4%, 짝 규칙표 44.0%, 데이터 v3 정리 43.5%, QLoRA 파인튜닝 86.1%, 최종 test 85.8%. 목표 80%.">
+        <div class="row"><span>성분 2개 첫 시도</span><div class="track"><div class="fill" style="width:14.4%"></div><div class="goal" style="left:80%"></div></div><span class="val">14.4%</span></div>
+        <div class="row"><span>짝 규칙표</span><div class="track"><div class="fill" style="width:44%"></div><div class="goal" style="left:80%"></div></div><span class="val">44.0%</span></div>
+        <div class="row"><span>데이터 v3 정리</span><div class="track"><div class="fill" style="width:43.5%"></div><div class="goal" style="left:80%"></div></div><span class="val">43.5%</span></div>
+        <div class="row"><span>QLoRA 파인튜닝</span><div class="track"><div class="fill best" style="width:86.1%"></div><div class="goal" style="left:80%"></div></div><span class="val">86.1%</span></div>
+        <div class="row"><span>최종 test</span><div class="track"><div class="fill test" style="width:85.8%"></div><div class="goal" style="left:80%"></div></div><span class="val">85.8%</span></div>
+      </div>
+      <div class="legend"><span><i style="background:var(--gold)"></i>프롬프트 개선 (dev)</span><span><i style="background:var(--accent)"></i>파인튜닝 (dev)</span><span><i style="background:var(--dark)"></i>test 240문장</span><span><i style="background:var(--ink);width:2px"></i>목표 80%</span></div>
+      <p class="caption">학습 데이터 2,820문장(94개 상황 × 30문장) · 4bit NF4 + LoRA r16 · RTX 4090에서 약 56분</p>
+    </div>
+
+    <div class="grid g2" style="margin-top:24px">
+      <div class="card">
+        <h3>A.X를 고른 이유</h3>
+        <p style="margin-bottom:14px">같은 데이터로 EXAONE-3.5-7.8B도 학습했습니다. test는 EXAONE 88.3%, A.X 85.8%였지만 통계적으로 구분되지 않았습니다(McNemar p=0.29).</p>
+        <div class="compare">
+          <div class="item"><span class="label">단백질이 정답인 74문장 · A.X</span><span class="v">66개 (89.2%)</span></div>
+          <div class="item"><span class="label">단백질이 정답인 74문장 · EXAONE</span><span class="v">56개 (75.7%)</span></div>
+        </div>
+        <p class="caption">운동, 성장, 수유처럼 핵심 상황의 주 성분인 단백질을 더 잘 맞혀 A.X를 유지했습니다.</p>
+      </div>
+      <div class="card">
+        <h3>양자화로 노트북 시연</h3>
+        <p style="margin-bottom:14px">어댑터를 원본에 합치고 GGUF Q5_K_M으로 줄여 Ollama로 실행했습니다.</p>
+        <div class="compare">
+          <div class="item"><span class="label">필요한 파일 용량</span><span class="v">14.7GB<span class="arrow">→</span>5.2GB</span></div>
+          <div class="item"><span class="label">문장당 응답 (RTX 4060)</span><span class="v">3.3초<span class="arrow">→</span>0.81초</span></div>
+          <div class="item"><span class="label">dev 정답 수 (216문장)</span><span class="v">186<span class="arrow">→</span>186</span></div>
+          <div class="item"><span class="label">test 정답률 (240문장)</span><span class="v">85.8%<span class="arrow">→</span>87.5%</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:16px">
+      <h3>관계없는 문장 거르기</h3>
+      <p>모델이 “오늘 날씨 어때”에도 영양소를 지어내는 문제가 있었습니다. 재학습 없이 규칙 검사와 시스템 프롬프트 두 단계로 막아, 잡담 6문장을 모두 걸렀습니다(수정 전 1문장). 인사·요청어 13문장도 모두 걸렀고, 정상 문장 정확도는 dev 86.1%에서 85.6%로 1문장만 바뀌었습니다.</p>
+    </div>
+  </div>
+</section>
+
+<section id="next">
+  <div class="wrap">
+    <h2>한계와 다음 단계</h2>
+    <div class="grid g2" style="margin-top:20px">
+      <div class="card">
+        <h3>아직 안 되는 것</h3>
+        <ul class="clean">
+          <li>카테고리까지 문장으로 처리하려던 계획은 시간 문제로 구현하지 못해, 화면에서 직접 고르는 방식으로 남겼습니다.</li>
+          <li>학습을 충분히 더 진행하지 못해 모델 성능을 더 끌어올릴 여지가 있습니다.</li>
+          <li>상품 DB는 CU 한 곳의 상품만 담고 있습니다.</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>다음에 할 것</h3>
+        <ul class="clean">
+          <li>안정적인 서버 환경에서 카테고리도 문장 한 줄에서 함께 뽑도록 확장하고, 학습 데이터를 늘려 다시 학습합니다.</li>
+          <li>CU 외 다른 편의점으로 영양 DB를 넓힙니다.</li>
+          <li>알레르기, 건강 목적 같은 조건을 추가합니다.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="team">
+  <div class="wrap">
+    <h2>팀과 링크</h2>
+    <p class="sub">팀 아이넷 · 4명</p>
+    <div class="grid g4">
+      <div class="card"><h3>박하영</h3><span class="tag">자연어처리, Agent LLM</span><p style="margin-top:6px">요청 해석 데이터 설계·정제, A.X QLoRA 파인튜닝·평가, parse_query와 입력 안전장치</p></div>
+      <div class="card"><h3>김종호</h3><span class="tag">모델 비교평가, API</span><p style="margin-top:6px">모델 비교 평가, test 240문장 작성, 예산 필터, FastAPI 연결</p></div>
+      <div class="card"><h3>이규남</h3><span class="tag">Vision LLM, DB, 추천 필터</span><p style="margin-top:6px">상품·영양 데이터 수집과 DB, 후보 검색·랭킹 엔진, 팀 코드 통합</p></div>
+      <div class="card"><h3>조혁준</h3><span class="tag">UI/UX, 양자화</span><p style="margin-top:6px">웹 화면과 이유별 안내 문구, 모델 양자화·비교</p></div>
+    </div>
+
+    <div class="buttons" style="margin-top:28px">
+      <a class="btn primary" href="https://github.com/nnujabes/Pick_CU">GitHub 저장소</a>
+      <a class="btn" href="https://huggingface.co/nnujabes/pickcu-ax-4.0-light-lora">LoRA 어댑터 (Hugging Face)</a>
+      <a class="btn" href="https://huggingface.co/nnujabes/pickcu-ax-4.0-light-gguf">양자화 모델 GGUF (Hugging Face)</a>
+    </div>
+    <p class="caption">설치와 실행 방법은 GitHub 저장소의 README에 있습니다.</p>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">영양 편의점 (Pick CU) · 팀 아이넷 · K-Digital Training 2026</div>
+</footer>
+
+</body>
+</html>
