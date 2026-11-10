@@ -366,13 +366,14 @@
 
     <div class="grid g2" style="margin-top:24px">
       <div class="card">
-        <h3>A.X를 고른 이유</h3>
-        <p style="margin-bottom:14px">같은 데이터로 EXAONE-3.5-7.8B도 학습했습니다. test는 EXAONE 88.3%, A.X 85.8%였지만 통계적으로 구분되지 않았습니다(McNemar p=0.29).</p>
+        <h3>후보 모델 3개</h3>
+        <p style="margin-bottom:14px">시연 노트북(RTX 4060 8GB)에서 돌릴 수 있는 7~8B 모델을 한국어 벤치마크 7종 평균으로 비교했습니다.</p>
         <div class="compare">
-          <div class="item"><span class="label">단백질이 정답인 74문장 · A.X</span><span class="v">66개 (89.2%)</span></div>
-          <div class="item"><span class="label">단백질이 정답인 74문장 · EXAONE</span><span class="v">56개 (75.7%)</span></div>
+          <div class="item"><span class="label">1위 A.X 4.0 Light · 양자화 약 5.2GB</span><span class="v">60.19</span></div>
+          <div class="item"><span class="label">2위 Qwen3-8B · 양자화 약 5.0GB</span><span class="v">56.67</span></div>
+          <div class="item"><span class="label">3위 EXAONE-3.5-7.8B · 양자화 약 4.8GB</span><span class="v">52.59</span></div>
         </div>
-        <p class="caption">운동, 성장, 수유처럼 핵심 상황의 주 성분인 단백질을 더 잘 맞혀 A.X를 유지했습니다.</p>
+        <p class="caption">KMMLU, KMMLU-pro, KMMLU-redux, CLIcK, KoBALT, Ko-MT-Bench, Ko-IFEval 단순 평균(SKT 공개 값). 1위인 A.X 4.0 Light를 서비스 모델로 골랐습니다.</p>
       </div>
       <div class="card">
         <h3>양자화로 노트북 시연</h3>
